@@ -13,6 +13,7 @@ LABEL Description="Customized ROS-Kinetic-Full-Desktop with CUDA 9 support for U
 # Arguments
 ARG user=docker
 ARG uid=1000
+ARG shell=/bin/bash
 ARG workspace="/home/${user}/data/ROS/catkin_ws"
 
 # ------------------------------------------ Install required (&useful) packages --------------------------------------
@@ -47,15 +48,12 @@ ENV LANGUAGE en_US:en
 ENV LC_ALL en_US.UTF-8
 
 # Crete and add user
-RUN useradd -ms /bin/bash ${user}
+RUN useradd -ms ${shell} ${user}
 ENV USER=${user}
 
 RUN export uid=${uid} gid=${uid}
 
 RUN \
-  mkdir -p /etc/sudoers.d && \
-  echo "${user}:x:${uid}:${uid}:${user},,,:$HOME:${shell}" >> /etc/passwd && \
-  echo "${user}:x:${uid}:" >> /etc/group && \
   echo "${user} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${user}" && \
   chmod 0440 "/etc/sudoers.d/${user}"
   RUN chown ${uid}:${uid} -R "/home/${user}"
@@ -115,9 +113,8 @@ COPY custom_files/terminator_config /home/${user}/.config/terminator/config
 
 # In the newly loaded container sometimes you can't do `apt install <package>
 # unless you do a `apt update` first.  So run `apt update` as last step
-# NOTE: bash auto-completion may have to be enabled manually from /etc/bash.bashrc RUN apt-get update -y
-# CMD ["terminator"]
-# CMD ["gnome-terminal"]
+# NOTE: bash auto-completion may have to be enabled manually from /etc/bash.bashrc
+RUN sudo apt-get update -y
 
-ENTRYPOINT $HOME/inside.sh ; terminator
-
+# Using the "exec" form for the Entrypoint command
+ENTRYPOINT ["./inside.sh", "terminator"]
