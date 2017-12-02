@@ -9,4 +9,6 @@ sudo mount --rbind /extern $HOME/data
 # Change owner from root
 sudo chown $USER:$USER -R $HOME/data/
 
-exec $@
+echo "Succesfully mounted external user data ..."
+
+exec "$@"

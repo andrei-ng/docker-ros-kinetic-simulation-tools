@@ -1,12 +1,14 @@
 #!/usr/bin/env bash
 
 # Check args
-if [ "$#" -ne 1 ]; then
-  echo "usage: ./run.sh GIVEN_IMAGE_NAME"
+if [ "$#" -lt 1 ]; then
+  echo "usage: ./run.sh IMAGE_NAME"
   return 1
 fi
 
 set -e
+
+IMAGE_NAME=$1 && shift 1
 
 # Run the container with NVIDIA Graphics acceleration, shared network interface, shared X11
 nvidia-docker run --rm\
@@ -18,4 +20,4 @@ nvidia-docker run --rm\
   -v $HOME/.Xauthority:/root/.Xauthority -e XAUTHORITY=/root/.Xauthority \
   -v $HOME/Projects/devs/simulation/v-rep:/extern/v-rep \
   -e ROS_HOSTNAME=andrei-lp7510ub \
-  -it $1
+  -it $IMAGE_NAME "$@"
