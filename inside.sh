@@ -9,6 +9,10 @@ sudo mount --rbind /extern $HOME/data
 # Change owner from root
 sudo chown $USER:$USER -R $HOME/data/
 
-echo "Succesfully mounted external user data ..."
+# Create V_REP enviroment variables
+echo "export VREP_ROOT=$HOME/data/v-rep/v-rep-edu" >> $HOME/.bashrc
+echo "export VREP_ROOT=$HOME/data/v-rep/v-rep-edu" >> $HOME/.zshrc
+
+echo "Mounted external user data ..."
 
 exec "$@"

@@ -87,11 +87,38 @@ RUN sudo chmod +x /home/${user}/inside.sh
 # Add the bash aliases to zsh rc as well
 RUN cat $HOME/.bash_aliases >> $HOME/.zshrc
 
-# Configure the prompt in the docker container
+# ================== Install packages required to build V-REP - ROS interface ==================
+# Install packages as described in file  'ros_vrep_rosinterface_install_guide.txt'
+# available in the v-rep_xxx_xxx/programming/ros_packages (V-REP installation folder)
+RUN sudo apt-get install -y python-tempita \
+	python-lxml default-jre \
+	xsltproc
+# without the last one (xsltproc), building vrep_ros_interface from sources gives Python errors
+
+# Install & configure 'saxon' (not mandatory) but catkin build will issue warning otherwise
+# Check the details in the V-REP installation guide file at 
+# v-rep_xxx_xxx/programming/ros_packages/ros_vrep_rosinterface_install_guide.txt
+RUN sudo mkdir -p $HOME/packages/downloads
+RUN sudo mkdir -p $HOME/packages/saxon/bin
+RUN ls $HOME/packages
+RUN sudo wget -P $HOME/packages/downloads http://downloads.sourceforge.net/project/saxon/Saxon-HE/9.7/SaxonHE9-7-0-8J.zip
+RUN sudo unzip $HOME/packages/downloads/SaxonHE9-7-0-8J.zip -d $HOME/packages/saxon
+# Make user the owner of the copied files 
+RUN sudo chown -R ${user}:${user} /home/${user}/packages
+# Make a binary script that is called by V-REP
+RUN cd $HOME/packages/saxon && sudo echo -e '#!/bin/sh\njava -jar "`dirname "$0"`/../saxon9he.jar" "$@"' > bin/saxon
+RUN sudo chmod a+x $HOME/packages/saxon/bin/saxon
+
+# Update PATH env var with the location of saxon executable:
+RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.bashrc
+RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.zshrc
+
+# Change the bash prompt in the docker container
 #RUN echo 'export PS1="[\u@vrep-docker]~\w# "' >> /etc/.profile
 #ENV PS1 '[\u@vrep-docker]\w#'
 #RUN echo 'PS1="\[$(tput setaf 3)$(tput bold)[\]\u@ros-docker$:\\w]#\[$(tput sgr0) \]"' >> root/.bashrc
 
+# ================== Final environment configs ==================
 # Create a mount point to bind host data to
 VOLUME /extern
 
