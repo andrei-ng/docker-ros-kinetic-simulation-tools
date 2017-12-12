@@ -5,15 +5,10 @@
 sudo mkdir -p /home/$USER/data
 # Do a recursive mount
 sudo mount --rbind /extern $HOME/data
-
 echo "Mounted external user data ..."
 
 # Change owner from root
 sudo chown $USER:$USER -R $HOME/data/
-
-# Create V_REP enviroment variables
-echo "export VREP_ROOT=$HOME/data/v-rep/v-rep-edu" >> $HOME/.bashrc
-echo "export VREP_ROOT=$HOME/data/v-rep/v-rep-edu" >> $HOME/.zshrc
 
 # Reminder of user to source the custom catkin_ws/devel/setup.zhs or setup.bash when building ROS packages
 default_shell=$(echo $SHELL)
@@ -31,5 +26,9 @@ elif [[ $default_shell =~ .*bash.* ]]; then
  	# source $HOME/catkin_ws/devel/setup.bash
 	# echo "source $HOME/catkin_ws/devel/setup.bash" >> $HOME/.bashrc
 fi
+
+# Create V_REP enviroment variables
+echo "export VREP_ROOT=$HOME/v-rep" >> $HOME/.bashrc
+echo "export VREP_ROOT=$HOME/v-rep" >> $HOME/.zshrc
 
 exec "$@"

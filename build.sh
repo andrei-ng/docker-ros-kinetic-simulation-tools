@@ -23,5 +23,4 @@ docker build\
   --build-arg user=$dUSER\
   --build-arg uid=$UID\
   --build-arg shell=$dSHELL\
-  --build-arg workspace="/home/$dUSER/data/ROS/catkin_ws"\
   -t $1 .

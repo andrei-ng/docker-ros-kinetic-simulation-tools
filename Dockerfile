@@ -14,7 +14,7 @@ LABEL Description="Customized ROS-Kinetic-Full-Desktop with CUDA 9 support for U
 ARG user=docker
 ARG uid=1000
 ARG shell=/bin/bash
-ARG workspace="/home/${user}/data/ROS/catkin_ws"
+ARG workspace="/home/${user}/catkin_ws"
 
 # ------------------------------------------ Install required (&useful) packages --------------------------------------
 RUN apt-get update && apt-get install -y \
@@ -69,24 +69,6 @@ RUN ln -s $HOME/.oh-my-zsh/custom/pure/pure.zsh-theme $HOME/.oh-my-zsh/custom/
 RUN ln -s $HOME/.oh-my-zsh/custom/pure/async.zsh $HOME/.oh-my-zsh/custom/
 RUN sed -i -e 's/robbyrussell/refined/g' $HOME/.zshrc
 
-# Source ROS setup into .rc files
-RUN echo "source /opt/ros/kinetic/setup.sh" >> $HOME/.bashrc
-RUN echo "source /opt/ros/kinetic/setup.zsh" >> $HOME/.zshrc
-# Configure ROS
-RUN sudo rm -rf /etc/ros/rosdep/sources.list.d/*
-RUN sudo rosdep init && sudo rosdep fix-permissions && rosdep update 
-
-# $HOME does not seem to work with the COPY directive
-COPY custom_files/bash_aliases /home/${user}/.bash_aliases
-COPY inside.sh /home/${user}/inside.sh
-# Make user the owner of the copied files 
-RUN sudo chown ${user}:${user} /home/${user}/.bash_aliases
-RUN sudo chown ${user}:${user} /home/${user}/inside.sh
-RUN sudo chmod +x /home/${user}/inside.sh
-
-# Add the bash aliases to zsh rc as well
-RUN cat $HOME/.bash_aliases >> $HOME/.zshrc
-
 # ================== Install packages required to build V-REP - ROS interface ==================
 # Install packages as described in file  'ros_vrep_rosinterface_install_guide.txt'
 # available in the v-rep_xxx_xxx/programming/ros_packages (V-REP installation folder)
@@ -109,9 +91,37 @@ RUN sudo chown -R ${user}:${user} /home/${user}/packages
 RUN cd $HOME/packages/saxon && sudo echo -e '#!/bin/sh\njava -jar "`dirname "$0"`/../saxon9he.jar" "$@"' > bin/saxon
 RUN sudo chmod a+x $HOME/packages/saxon/bin/saxon
 
+# Remove the saxon downloads folder 
+RUN sudo rm -r $HOME/packages/downloads
+
 # Update PATH env var with the location of saxon executable:
 RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.bashrc
 RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.zshrc
+
+# =============================== Configs ==========================================
+# Source ROS setup into .rc files
+RUN echo "source /opt/ros/kinetic/setup.sh" >> $HOME/.bashrc
+RUN echo "source /opt/ros/kinetic/setup.zsh" >> $HOME/.zshrc
+
+# Configure ROS
+RUN sudo rm -rf /etc/ros/rosdep/sources.list.d/*
+RUN sudo rosdep init && sudo rosdep fix-permissions && rosdep update 
+
+# Copy custom files 
+# NOTE: $HOME does not seem to work with the COPY directive
+# Copy Terminator configuration
+RUN mkdir -p $HOME/.config/terminator/
+COPY config_files/terminator_config /home/${user}/.config/terminator/config
+
+COPY config_files/bash_aliases /home/${user}/.bash_aliases
+# Add the bash aliases to zsh rc as well
+RUN cat $HOME/.bash_aliases >> $HOME/.zshrc
+
+COPY entrypoint.sh /home/${user}/entrypoint.sh
+RUN sudo chmod +x /home/${user}/entrypoint.sh
+
+# Make user the owner of the copied files 
+RUN sudo chown -R ${user}:${user} /home/${user}
 
 # Change the bash prompt in the docker container
 #RUN echo 'export PS1="[\u@vrep-docker]~\w# "' >> /etc/.profile
@@ -128,15 +138,12 @@ EXPOSE 22
 # This is required for sharing Xauthority
 ENV QT_X11_NO_MITSHM=1
 
-# Create CATKIN ENV variable
-ENV CATKIN_TOPLEVEL_WS=${workspace}
+# Create CATKIN workspace folder and ENV variable
+RUN mkdir -p home/${user}/catkin_ws
+ENV CATKIN_TOPLEVEL_WS=home/${user}/catkin_ws
 
 # Switch to user's HOME folder
 WORKDIR /home/${user}
-
-# Configure Terminator
-RUN mkdir -p $HOME/.config/terminator/
-COPY custom_files/terminator_config /home/${user}/.config/terminator/config
 
 # In the newly loaded container sometimes you can't do `apt install <package>
 # unless you do a `apt update` first.  So run `apt update` as last step
@@ -144,4 +151,5 @@ COPY custom_files/terminator_config /home/${user}/.config/terminator/config
 RUN sudo apt-get update -y
 
 # Using the "exec" form for the Entrypoint command
-ENTRYPOINT ["./inside.sh", "terminator"]
+ENTRYPOINT ["./entrypoint.sh", "terminator"]
+CMD ["-e", "echo $INFO_MSG && /usr/bin/zsh"]

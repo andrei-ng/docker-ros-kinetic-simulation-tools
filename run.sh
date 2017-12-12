@@ -40,6 +40,8 @@ $(echo $docker_run_cmd) \
     -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
     -v $HOME/.Xauthority:$home_folder/.Xauthority \
     -e XAUTHORITY=$home_folder/.Xauthority \
-    -v $HOME/Projects/devs/simulation/v-rep:/extern/v-rep \
+    -v $HOME/Projects/devs/catkin_ws:$home_folder/catkin_ws \
+    -v $HOME/Projects/devs/v-rep-edu:$home_folder/v-rep \
+    -v $HOME/Projects/devs/extra_packages:/extern \
     -e ROS_HOSTNAME=$THIS_HOST \
     -it $IMAGE_NAME "$@"

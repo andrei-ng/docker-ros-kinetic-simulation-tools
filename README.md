@@ -50,15 +50,17 @@ In a terminal enter [./run.sh](./run.sh) with the image name from the previous s
 
 Note that V-REP simulator is not installed nor copied in the Docker container. Rather, the host V-REP installation folder is volume mounted in the Docker container at runtime by adding the following line to the `nvidia-docker run` command (see the [run.sh](./run.sh) contents),
 ```
-  -v $HOME/Projects/devs/simulation/v-rep:/extern/v-rep \
+  -v $HOME/Projects/devs/v-rep-edu:/home/docker/v-rep
 ```
-where you should replace the source path `$HOME/Projects/devs/simulation/v-rep` with your V-REP installation location. 
+where you should replace the source path `$HOME/Projects/devs/v-rep-edu` with your own V-REP installation location. 
+
+A similar mounting can be done for the `CATKIN Workspace` directory, e.g., if you want to save the workspace data on the host side.
 
 #### Testing functionality
 
 ##### Test V-REP
 
-When the Docker container is launched, a [terminator](https://gnometerminator.blogspot.nl/p/introduction.html) window opens. Navigate to either `/extern/v-rep` or to `$HOME/data/v-rep` and type 
+When the Docker container is launched, a [terminator](https://gnometerminator.blogspot.nl/p/introduction.html) window opens. Navigate to `$HOME/v-rep` and type 
 ```
 ./vrep.sh
 ``` 
