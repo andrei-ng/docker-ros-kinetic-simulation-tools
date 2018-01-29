@@ -17,33 +17,28 @@ ARG shell=/bin/bash
 ARG workspace="/home/${user}/catkin_ws"
 
 # ------------------------------------------ Install required (&useful) packages --------------------------------------
-RUN apt-get update && apt-get install -y \
-lsb-release \
-mesa-utils \
-git \
-subversion \
-nano \
-terminator \
-gnome-terminal \
-wget \
-unzip \
-apt-utils \
-curl \
-htop \
-python3-pip python-pip  \
-software-properties-common python-software-properties \
-gdb valgrind \
-zsh screen tree \
-sudo ssh synaptic vim \
-python-rosdep python-rosinstall \
-x11-apps build-essential \
-libcanberra-gtk*
+# Also install packages as described in file  'ros_vrep_rosinterface_install_guide.txt'
+# available in the v-rep_xxx_xxx/programming/ros_packages (V-REP installation folder)
+# without the xsltproc package, building vrep_ros_interface from sources gives Python errors
 
-# Install python pip(s)
-RUN sudo -H pip2 install -U pip numpy && sudo -H pip3 install -U pip numpy
+RUN apt-get update -y && apt-get install --no-install-recommends -y \
+ lsb-release apt-utils mesa-utils build-essential \
+ software-properties-common locales x11-apps \
+ git subversion \
+ nano vim \
+ zsh screen tree \
+ sudo ssh synaptic \
+ gnome-terminal terminator \
+ wget curl unzip htop \
+ gdb valgrind \
+ libcanberra-gtk* \
+ python-keybinder python-notify \
+ python-tempita python-lxml default-jre xsltproc \
+&& sudo -H pip2 install -U pip numpy && sudo -H pip3 install -U pip numpy \
+&& rm -rf /var/lib/apt/lists/* \
+&& apt-get clean
 
 # Configure timezone and locale
-RUN sudo apt-get clean && sudo apt-get update -y && sudo apt-get install -y locales
 RUN sudo locale-gen en_US.UTF-8  
 ENV LANG en_US.UTF-8  
 ENV LANGUAGE en_US:en  
@@ -71,28 +66,18 @@ RUN ln -s $HOME/.oh-my-zsh/custom/pure/pure.zsh-theme $HOME/.oh-my-zsh/custom/
 RUN ln -s $HOME/.oh-my-zsh/custom/pure/async.zsh $HOME/.oh-my-zsh/custom/
 RUN sed -i -e 's/robbyrussell/refined/g' $HOME/.zshrc
 
-# ================== Install packages required to build V-REP - ROS interface ==================
-# Install packages as described in file  'ros_vrep_rosinterface_install_guide.txt'
-# available in the v-rep_xxx_xxx/programming/ros_packages (V-REP installation folder)
-RUN sudo apt-get install -y python-tempita \
-	python-lxml default-jre \
-	xsltproc
-# without the last one (xsltproc), building vrep_ros_interface from sources gives Python errors
-
+# ================== Configure packages required to build V-REP - ROS interface ==================
 # Install & configure 'saxon' (not mandatory) but catkin build will issue warning otherwise
 # Check the details in the V-REP installation guide file at 
 # v-rep_xxx_xxx/programming/ros_packages/ros_vrep_rosinterface_install_guide.txt
-RUN sudo mkdir -p $HOME/packages/downloads
-RUN sudo mkdir -p $HOME/packages/saxon/bin
-RUN ls $HOME/packages
-RUN sudo wget -P $HOME/packages/downloads http://downloads.sourceforge.net/project/saxon/Saxon-HE/9.7/SaxonHE9-7-0-8J.zip
-RUN sudo unzip $HOME/packages/downloads/SaxonHE9-7-0-8J.zip -d $HOME/packages/saxon
+RUN sudo mkdir -p $HOME/packages/downloads && sudo mkdir -p $HOME/packages/saxon/bin
+RUN sudo wget -P $HOME/packages/downloads http://downloads.sourceforge.net/project/saxon/Saxon-HE/9.7/SaxonHE9-7-0-8J.zip \
+	&& sudo unzip $HOME/packages/downloads/SaxonHE9-7-0-8J.zip -d $HOME/packages/saxon
 # Make user the owner of the copied files 
 RUN sudo chown -R ${user}:${user} /home/${user}/packages
 # Make a binary script that is called by V-REP
 RUN cd $HOME/packages/saxon && sudo echo -e '#!/bin/sh\njava -jar "`dirname "$0"`/../saxon9he.jar" "$@"' > bin/saxon
 RUN sudo chmod a+x $HOME/packages/saxon/bin/saxon
-
 # Remove the saxon downloads folder 
 RUN sudo rm -r $HOME/packages/downloads
 
@@ -146,11 +131,6 @@ ENV CATKIN_TOPLEVEL_WS=home/${user}/catkin_ws
 
 # Switch to user's HOME folder
 WORKDIR /home/${user}
-
-# In the newly loaded container sometimes you can't do `apt install <package>
-# unless you do a `apt update` first.  So run `apt update` as last step
-# NOTE: bash auto-completion may have to be enabled manually from /etc/bash.bashrc
-RUN sudo apt-get update -y
 
 # Using the "exec" form for the Entrypoint command
 ENTRYPOINT ["./entrypoint.sh", "terminator"]
