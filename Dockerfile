@@ -26,6 +26,8 @@ nano \
 terminator \
 gnome-terminal \
 wget \
+unzip \
+apt-utils \
 curl \
 htop \
 python3-pip python-pip  \
