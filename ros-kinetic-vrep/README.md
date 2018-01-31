@@ -1,14 +1,12 @@
-## Docker ROS Kinetic & V-REP
-
-Use the [Dockerfile](./Dockerfile) and the [build](./build.sh) & [run](./build.sh) scripts to create and run a Docker container consisting of [ROS Kinetic](http://wiki.ros.org/kinetic) (full version) for Ubuntu Xenial with NVIDIA hardware acceleration, OpenGL support and shared X11 socket. 
+## Docker ROS Kinetic with V-REP
 
 This image is used for testing the [V-REP](http://www.coppeliarobotics.com/index.html) simulator with ROS Kinetic from within a Docker container.
 
-This image combines the build steps of the following two images
-* [docker_ros_kinetic_cuda9](https://github.com/gandrein/docker_ros_kinetic_cuda9)
-* [docker_customizing_users](https://github.com/gandrein/docker_customizing_users)
-
-Please refer to those repositories for more details about the respective images and the build process.
+The image is also customized such that (for details see [this](https://github.com/gandrein/docker-xenial-with-terminator-zsh) repository):
+* the docker image is created with a non-root user (default user-name `docker`)
+* [Oh My ZSH](http://ohmyz.sh/) is installed and configured for the non-root user
+* docker containers are launched with [`terminator`](https://gnometerminator.blogspot.nl/p/introduction.html) as the default terminal emulator (as opposed to default `gnome-terminal`)
+* bash completion for Docker image names and tags when launching the container by using the `./run_docker.sh` script
 
 ---
 
@@ -16,7 +14,8 @@ Please refer to those repositories for more details about the respective images 
 1. [Requirements](#1-requirements)
 2. [Building the image](#2-building-the-image)
 3. [Running the container](#3-running-the-container)
-3. [V-REP - ROS interface](#4-v-rep---ros-interface)
+4. [V-REP usage](#4-v-rep-usage)
+5. [V-REP - ROS interface](#4-v-rep---ros-interface)
 
 ### 1. Requirements
 
@@ -26,29 +25,34 @@ This docker container has been build and tested on a machine running Ubuntu 16.0
 * [V-REP PRO EDU V3.4.0 rev1](http://www.coppeliarobotics.com/downloads.html)
 
 #### Dependencies
-This Docker image uses as base the custom [docker_ros_kinetic_cuda9](https://github.com/gandrein/docker_ros_kinetic_cuda9) image available from [this repository](https://github.com/gandrein/docker_ros_kinetic_cuda9).
+This Docker image uses as base the `codookie/xenial:ros-kinetic-base-nvidia` image. This has to be build previously in order to build this image. 
 
 ### 2. Building the image
 
-1. Make sure you have built the [docker_ros_kinetic_cuda9](https://github.com/gandrein/docker_ros_kinetic_cuda9) image on your local machine, as mentioned in the _Dependencies_ section above. 
-2. In a terminal run [./build.sh](./build.sh) to build a docker image with the name provided as the first argument and with a specified non-root user (`default = docker`) for the docker container.
-	* If you have given a different name to the base image from step 1, make sure to change this line in the [Dockerfile](./Dockerfile)
-		```
-		FROM ros_kinetic_full_cuda9 
-		```
-		with the corresponding name.
+There are two ways of building this image:
+* using the top-level [`Makefile`](./../Makefile) and the `make` command [_Recommended_]
+* using this folder's [build](./build.sh) script. 
 
+The first method will handle the base image dependency for you, while in the second approach you have to make sure you have build 
+the base image `ros-kinetic-base-nvidia` yourself.
 
 ### 3. Running the container
 
-In a terminal enter [./run.sh](./run.sh) with the image name from the previous step. This will run and remove the docker image upon exit (i.e., it is ran with the `--rm` flag).
+In a terminal enter [./run_docker.sh](./run_docker.sh) with the image name from the previous step. This will run and remove the docker image upon exit (i.e., it is ran with the `--rm` flag).
 ```
-./run.sh GIVEN_IMAGE_NAME
+./run_docker.sh GIVEN_IMAGE_NAME
 ```
 
-#### V-REP usage
+#### Bash auto-completion for `./run_docker.sh`
 
-Note that V-REP simulator is not installed nor copied in the Docker container. Rather, the host V-REP installation folder is volume mounted in the Docker container at runtime by adding the following line to the `nvidia-docker run` command (see the [run.sh](./run.sh) contents),
+When using `./run_docker.sh` in a bash shell to launch the container, source the [bash_docker_images_completion.sh](./../configs/bash_docker_images_completion.sh) script. Now you should be able to get the names of the available docker images on your system whenever you type 
+```
+./run_docker.sh <TAB><TAB>
+```
+
+### 4.V-REP usage
+
+Note that V-REP simulator is not installed nor copied in the Docker container. Rather, the host V-REP installation folder is volume mounted in the Docker container at runtime by adding the following line to the `nvidia-docker run` command (see the contents of the [run_docker.sh](./run_docker.sh) scrip),
 ```
   -v $HOME/Projects/devs/v-rep-edu:/home/docker/v-rep
 ```
@@ -71,7 +75,7 @@ The V-REP simulator GUI should launch.
 
 While inside the container call `roscore`. The `ros master` should be launched. 
 
-### 4. V-REP - ROS Interface
+### 5. V-REP - ROS Interface
 
 There are two ways you can build the V-REP - ROS Interface
 1. Follow the online V-REP tutorial at
