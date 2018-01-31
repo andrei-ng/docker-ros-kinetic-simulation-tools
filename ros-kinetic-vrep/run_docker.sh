@@ -26,9 +26,9 @@ fi
 # Deterimine configured user for the docker image
 docker_user=$(docker image inspect --format '{{.Config.User}}' $IMAGE_NAME)
 if [ "$docker_user" = "" ]; then
-    home_folder="/root"
+    dHOME_FOLDER="/root"
 else
-    home_folder="/home/$docker_user"    
+    dHOME_FOLDER="/home/$docker_user"    
 fi
 
 # Run the container with NVIDIA Graphics acceleration, shared network interface, shared hostname, shared X11
@@ -37,11 +37,11 @@ $(echo $docker_run_cmd) \
     --ipc=host \
     --privileged \
     -e DISPLAY=$DISPLAY \
-    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
-    -v $HOME/.Xauthority:$home_folder/.Xauthority \
-    -e XAUTHORITY=$home_folder/.Xauthority \
-    -v $HOME/Projects/devs/catkin_ws:$home_folder/catkin_ws \
-    -v $HOME/Projects/devs/v-rep-edu:$home_folder/v-rep \
-    -v $HOME/Projects/devs/extra_packages:/extern \
     -e ROS_HOSTNAME=$THIS_HOST \
+    -e XAUTHORITY=$dHOME_FOLDER/.Xauthority \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    -v $HOME/.Xauthority:$dHOME_FOLDER/.Xauthority \
+    -v $HOME/Projects/devs/catkin_ws:$dHOME_FOLDER/catkin_ws \
+    -v $HOME/Projects/devs/v-rep-edu:$dHOME_FOLDER/v-rep \
+    -v $HOME/Projects/devs/extra_packages:/extern \
     -it $IMAGE_NAME "$@"

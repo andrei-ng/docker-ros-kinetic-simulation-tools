@@ -29,12 +29,23 @@ fi
 
 # Create V_REP enviroment variables
 echo "export VREP_ROOT=$HOME/v-rep" >> $HOME/.bashrc
-echo "export VREP_ROOT=$HOME/v-rep" >> $HOME/.zshrc
 
 # Add QTcreator alias command
+qt_alias="alias qtcreator=$HOME/Qt/Tools/QtCreator/bin/qtcreator"
 if [ -d "$HOME/Qt" ]; then
-	echo "alias qtcreator=$HOME/Qt/Tools/QtCreator/bin/qtcreator" >> $HOME/.bash_aliases
-	echo "alias qtcreator=$HOME/Qt/Tools/QtCreator/bin/qtcreator" >> $HOME/.zshrc
+	echo "" >> $HOME/.bash_aliases
+	echo "$qt_alias" >> $HOME/.bash_aliases
+fi
+
+# Do the same for zshrc
+if [ -f "$HOME/.zshrc" ]; then
+	echo "" >> $HOME/.zshrc
+	echo "export VREP_ROOT=$HOME/v-rep" >> $HOME/.zshrc
+
+	# Add QTcreator alias command
+	if [ -d "$HOME/Qt" ]; then
+		echo "$qt_alias" >> $HOME/.zshrc
+	fi
 fi
 
 exec "$@"

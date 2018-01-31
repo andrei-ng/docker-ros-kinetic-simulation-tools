@@ -1,14 +1,8 @@
-# This Dockerfile creates a custom image based on the locally created
-# `ros_kinetic_full_cuda9` image
-# For more details on generating the above custom image, see the Dockerfile in 
-# the repository available here 
-# https://github.com/gandrein/docker_ros_kinetic_cuda9
-
-FROM ros_kinetic_full_cuda9 
+FROM codookie/xenial:ros-kinetic-base-nvidia
 
 MAINTAINER Andrei Gherghescu <gandrein@gmail.com>
 
-LABEL Description="Customized ROS-Kinetic-Full-Desktop with CUDA 9 support for Ubuntu 16.04" Version="1.0"
+LABEL Description="Customized ROS-Kinetic-Full-Desktop for VREP Simualtor with NVIDIA support for Ubuntu 16.04" Version="1.0"
 
 # Arguments
 ARG user=docker
@@ -53,62 +47,57 @@ RUN export uid=${uid} gid=${uid}
 RUN \
   echo "${user} ALL=(ALL) NOPASSWD: ALL" > "/etc/sudoers.d/${user}" && \
   chmod 0440 "/etc/sudoers.d/${user}"
-  RUN chown ${uid}:${uid} -R "/home/${user}"
 
 # Switch to user
 USER ${user}
 
 # Install and configure OhMyZSH
-RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true
-# RUN chsh -s /usr/bin/zsh ${user}
-RUN git clone https://github.com/sindresorhus/pure $HOME/.oh-my-zsh/custom/pure
-RUN ln -s $HOME/.oh-my-zsh/custom/pure/pure.zsh-theme $HOME/.oh-my-zsh/custom/
-RUN ln -s $HOME/.oh-my-zsh/custom/pure/async.zsh $HOME/.oh-my-zsh/custom/
-RUN sed -i -e 's/robbyrussell/refined/g' $HOME/.zshrc
+RUN wget https://github.com/robbyrussell/oh-my-zsh/raw/master/tools/install.sh -O - | zsh || true \
+ && git clone https://github.com/sindresorhus/pure $HOME/.oh-my-zsh/custom/pure \
+ && ln -s $HOME/.oh-my-zsh/custom/pure/pure.zsh-theme $HOME/.oh-my-zsh/custom/ \
+ && ln -s $HOME/.oh-my-zsh/custom/pure/async.zsh $HOME/.oh-my-zsh/custom/ \
+ && sed -i -e 's/robbyrussell/refined/g' $HOME/.zshrc
 
 # ================== Configure packages required to build V-REP - ROS interface ==================
 # Install & configure 'saxon' (not mandatory) but catkin build will issue warning otherwise
 # Check the details in the V-REP installation guide file at 
 # v-rep_xxx_xxx/programming/ros_packages/ros_vrep_rosinterface_install_guide.txt
-RUN sudo mkdir -p $HOME/packages/downloads && sudo mkdir -p $HOME/packages/saxon/bin
-RUN sudo wget -P $HOME/packages/downloads http://downloads.sourceforge.net/project/saxon/Saxon-HE/9.7/SaxonHE9-7-0-8J.zip \
-	&& sudo unzip $HOME/packages/downloads/SaxonHE9-7-0-8J.zip -d $HOME/packages/saxon
-# Make user the owner of the copied files 
-RUN sudo chown -R ${user}:${user} /home/${user}/packages
+RUN sudo mkdir -p $HOME/packages/downloads \
+	&& sudo mkdir -p $HOME/packages/saxon/bin \
+	&& sudo wget -P $HOME/packages/downloads http://downloads.sourceforge.net/project/saxon/Saxon-HE/9.7/SaxonHE9-7-0-8J.zip \
+	&& sudo unzip $HOME/packages/downloads/SaxonHE9-7-0-8J.zip -d $HOME/packages/saxon \
+	&& sudo chown -R ${user}:${user} /home/${user}/packages
 # Make a binary script that is called by V-REP
 RUN cd $HOME/packages/saxon && sudo echo -e '#!/bin/sh\njava -jar "`dirname "$0"`/../saxon9he.jar" "$@"' > bin/saxon
-RUN sudo chmod a+x $HOME/packages/saxon/bin/saxon
-# Remove the saxon downloads folder 
-RUN sudo rm -r $HOME/packages/downloads
-
-# Update PATH env var with the location of saxon executable:
-RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.bashrc
-RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.zshrc
+RUN sudo chmod a+x $HOME/packages/saxon/bin/saxon \
+  && sudo rm -r $HOME/packages/downloads
 
 # =============================== Configs ==========================================
-# Source ROS setup into .rc files
-RUN echo "source /opt/ros/kinetic/setup.sh" >> $HOME/.bashrc
-RUN echo "source /opt/ros/kinetic/setup.zsh" >> $HOME/.zshrc
+# Update PATH env var with the location of saxon executable:
+# and source ROS setup into .rc files
+RUN echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.bashrc \
+ && echo 'export PATH="$PATH:$HOME/packages/saxon/bin"' >> ~/.zshrc \
+ && echo "source /opt/ros/kinetic/setup.sh" >> $HOME/.bashrc \
+ && echo "source /opt/ros/kinetic/setup.zsh" >> $HOME/.zshrc
 
 # Configure ROS
-RUN sudo rm -rf /etc/ros/rosdep/sources.list.d/*
-RUN sudo rosdep init && sudo rosdep fix-permissions && rosdep update 
+RUN sudo rm -rf /etc/ros/rosdep/sources.list.d/* \
+	&& sudo rosdep init && sudo rosdep fix-permissions && rosdep update 
 
 # Copy custom files 
 # NOTE: $HOME does not seem to work with the COPY directive
+COPY entrypoint.sh /home/${user}/entrypoint.sh
 # Copy Terminator configuration
 RUN mkdir -p $HOME/.config/terminator/
-COPY config_files/terminator_config /home/${user}/.config/terminator/config
-
-COPY config_files/bash_aliases /home/${user}/.bash_aliases
+COPY configs/terminator_config /home/${user}/.config/terminator/config
+COPY configs/bash_aliases /home/${user}/.bash_aliases
 # Add the bash aliases to zsh rc as well
 RUN cat $HOME/.bash_aliases >> $HOME/.zshrc
 
-COPY entrypoint.sh /home/${user}/entrypoint.sh
-RUN sudo chmod +x /home/${user}/entrypoint.sh
-
-# Make user the owner of the copied files 
-RUN sudo chown -R ${user}:${user} /home/${user}
+RUN sudo chmod +x /home/${user}/entrypoint.sh \
+ && sudo chown ${user}:${user} /home/${user}/entrypoint.sh \
+  	/home/${user}/.config/terminator/config \
+  	/home/${user}/.bash_aliases
 
 # Change the bash prompt in the docker container
 #RUN echo 'export PS1="[\u@vrep-docker]~\w# "' >> /etc/.profile
