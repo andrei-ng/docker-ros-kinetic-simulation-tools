@@ -14,7 +14,7 @@ This docker image has been build and tested on a machine running Ubuntu 16.04 wi
 
 #### NVIDIA Hardware acceleration
 
-For details on how to install the `nvidia-docker1` go straight to the official [nvidia-docker 1.0](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-1.0)) repository.
+For details on how to install the `nvidia-docker1` see the official [nvidia-docker 1.0](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-1.0)) repository.
 
 ### Building the image
 

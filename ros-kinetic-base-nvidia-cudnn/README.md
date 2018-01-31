@@ -20,7 +20,7 @@ Use the first option if you need OpenGL support and the second if you don't. See
 
 #### NVIDIA Hardware acceleration
 
-For details on how to install the `nvidia-docker2` go straight to the official [nvidia-docker](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-2.0)) repository.
+For details on how to install the `nvidia-docker2` see the official [nvidia-docker](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-2.0)) repository.
 
 **Note** that `nvidia-docker2` does not have OpenGL support as mentioned in [issue #534](https://github.com/NVIDIA/nvidia-docker/issues/534). See also the [Troubleshooting](#no-opengl-support-troubleshooting) section. 
 
