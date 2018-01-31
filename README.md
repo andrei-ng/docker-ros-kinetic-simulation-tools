@@ -1,110 +1,71 @@
-## Docker ROS Kinetic & V-REP
+## NVIDIA Docker: Simulation Environments with ROS Kinetic
 
-Use the [Dockerfile](./Dockerfile) and the [build](./build.sh) & [run](./build.sh) scripts to create and run a Docker container consisting of [ROS Kinetic](http://wiki.ros.org/kinetic) (full version) for Ubuntu Xenial with NVIDIA hardware acceleration, OpenGL support and shared X11 socket. 
+This repository contains Dockerfile(s) for building Docker Images with [ROS Kinetic](http://wiki.ros.org/kinetic) (full version) with different Simulation Tools for Ubuntu Xenial targeted at NVIDIA platforms (with NVIDIA hardware acceleration, OpenGL support and shared X11 socket). 
 
-This image is used for testing the [V-REP](http://www.coppeliarobotics.com/index.html) simulator with ROS Kinetic from within a Docker container.
-
-This image combines the build steps of the following two images
-* [docker_ros_kinetic_cuda9](https://github.com/gandrein/docker_ros_kinetic_cuda9)
-* [docker_customizing_users](https://github.com/gandrein/docker_customizing_users)
-
-Please refer to those repositories for more details about the respective images and the build process.
-
+The images are used for testing ROS Kinetic with:
+* [V-REP](http://www.coppeliarobotics.com/index.html)
+* [Gazebo 7](http://gazebosim.org/blog/gazebo7)
+* [Gazebo 8](http://gazebosim.org/blog/gazebo8)
+* [Gazebo 9](http://gazebosim.org/blog/gazebo9)
 ---
 
 ### Contents
 1. [Requirements](#1-requirements)
-2. [Building the image](#2-building-the-image)
-3. [Running the container](#3-running-the-container)
-3. [V-REP - ROS interface](#4-v-rep---ros-interface)
+2. [Building images](#2-building-the-image)
+3. [Running a container](#3-running-the-container)
+4. [Simulation tools containers](#4-simulation-tools-containers)
 
 ### 1. Requirements
 
-This docker container has been build and tested on a machine running Ubuntu 16.04 with the following packages installed
-* `docker` version `17.09.0-ce`
+The docker containers have been build and tested on a machine running Ubuntu 16.04 with the following packages installed
+* `docker >= 17.09.0-ce`
+* `GNU Make >= 4.1`
 * [`nvidia-docker`](https://github.com/NVIDIA/nvidia-docker/wiki/Installation-(version-1.0)) version `1.0`
 * [V-REP PRO EDU V3.4.0 rev1](http://www.coppeliarobotics.com/downloads.html)
 
-#### Dependencies
-This Docker image uses as base the custom [docker_ros_kinetic_cuda9](https://github.com/gandrein/docker_ros_kinetic_cuda9) image available from [this repository](https://github.com/gandrein/docker_ros_kinetic_cuda9).
+### 2. Building Docker images
 
-### 2. Building the image
+The [Makefile](./Makefile) contained in the repository allows you to create docker images for the simulation tool of your choice using as a base image either
+* an image with ROS-Kinetic and NVIDIA Docker support 
+* an image with ROS-Kinetic and NVIDIA CUDA support. 
 
-1. Make sure you have built the [docker_ros_kinetic_cuda9](https://github.com/gandrein/docker_ros_kinetic_cuda9) image on your local machine, as mentioned in the _Dependencies_ section above. 
-2. In a terminal run [./build.sh](./build.sh) to build a docker image with the name provided as the first argument and with a specified non-root user (`default = docker`) for the docker container.
-	* If you have given a different name to the base image from step 1, make sure to change this line in the [Dockerfile](./Dockerfile)
-		```
-		FROM ros_kinetic_full_cuda9 
-		```
-		with the corresponding name.
+In a terminal type `make` followed by a `<TAB>` to see the available auto-complete options. 
+```
+make <TAB>
+```
 
+If you wish to change the names given to the Docker images the recommended way is to give a new TAG to the image by using the 
+```
+docker tag SOURCE_IMAGE[:TAG] TARGET_IMAGE[:TAG]
+```
+command, after you have build it with the `make` instruction. 
+
+You could also change the names in the `Makefile`. However, make sure you do not break the dependencies between coupled images. 
+
+#### Base images
+All Docker images with embedded simulation tools use the `ros-kinetic-base-nvidia` as base image which has support for Nvidia-docker and OpenGL, please refer to this [README](./ros-kinetic-base-nvidia-opengl/README.md) for more details.
+
+If you need the images for Machine Learning and Computer Vision development, you can switch all the simulation tools Docker images to depend on `ros-kinetic-base-nvidia-cuda`. For more details about this image, please refer to this [README](./ros-kinetic-base-nvidia-cudnn/README.md).
+
+E.g, for the V-REP Docker image you can switch to the above base image by replacing the `Makefile`'s dependency on the first line below to `ros-kinetic-base-nvidia-cuda`
+```
+ros-kinetic-vrep: ros-kinetic-base-nvidia ## Build ROS-Kinetic Xenial Docker Image for VREP simulator (with custom ROS development enviroment)
+	cd ros-kinetic-vrep; ./build.sh codookie/xenial:ros-kinetic-vrep
+	@printf "\n\033[92mDocker Image: codookie/xenial:ros-kinetic-vrep\033[0m\n"
+```
 
 ### 3. Running the container
 
-In a terminal enter [./run.sh](./run.sh) with the image name from the previous step. This will run and remove the docker image upon exit (i.e., it is ran with the `--rm` flag).
+Navigate to any of the subfolders and enter in a terminal [./run_docker.sh](./run_docker.sh) with the image name from the previous build step, e.g.,
 ```
-./run.sh GIVEN_IMAGE_NAME
+./run.sh codookie/xenial:ros-kinetic-vrep
 ```
 
-#### V-REP usage
 
-Note that V-REP simulator is not installed nor copied in the Docker container. Rather, the host V-REP installation folder is volume mounted in the Docker container at runtime by adding the following line to the `nvidia-docker run` command (see the [run.sh](./run.sh) contents),
-```
-  -v $HOME/Projects/devs/v-rep-edu:/home/docker/v-rep
-```
-where you should replace the source path `$HOME/Projects/devs/v-rep-edu` with your own V-REP installation location. 
+### 4. Simulation tools containers
 
-A similar mounting can be done for the `CATKIN Workspace` directory, e.g., if you want to save the workspace data on the host side.
-
-#### Testing functionality
-
-##### Test V-REP
-
-When the Docker container is launched, a [terminator](https://gnometerminator.blogspot.nl/p/introduction.html) window opens. Navigate to `$HOME/v-rep` and type 
-```
-./vrep.sh
-``` 
-The V-REP simulator GUI should launch. 
-
-
-##### Test ROS
-
-While inside the container call `roscore`. The `ros master` should be launched. 
-
-### 4. V-REP - ROS Interface
-
-There are two ways you can build the V-REP - ROS Interface
-1. Follow the online V-REP tutorial at
-	* [http://www.coppeliarobotics.com/helpFiles/en/rosTutorialIndigo.htm](http://www.coppeliarobotics.com/helpFiles/en/rosTutorialIndigo.htm)
-	* the tutorial works fine also with ROS Kinetic and you should be able to build your own ROS Interface (**libv_repExtRosInterface.so**) and follow all the suggested examples. 
-	* note that in the example based on scene **rosInterfaceTopicPublisherAndSubscriber.ttt** the camera data is published on the topic `/image` and not `visionSensorData`, hence the correct command to visualize the image data published on the rostopic is 
-	```
-	$ rosrun image_view image_view image:=/image
-	```
-2. Follow the instructions in the README file provided with the V-REP installation. 
-	* For [V-REP PRO EDU V3.4.0 rev1](http://www.coppeliarobotics.com/downloads.html), this file is titled _ros_vrep_rosinterface_install_guide.txt_ and can be found in your own V-REP's installation folder, at [<v_rep_edu_folder>/programming/ros_packages/]()
-	* Note that the _ros_vrep_rosinterface_install_guide.txt_ is not up to date and you may encounter the following issues when trying to build the ROS interface yourself:
-	  * both mentioned `git` repositories have been moved to the [CoppeliaRobotics](https://github.com/CoppeliaRobotics) github account
-	  * `xsltproc` package is required as mentioned in the dependency of the [v_repStubsGen](https://github.com/CoppeliaRobotics/v_repStubsGen) repository. The [Dockerfile](./Dockerfile) has been updated to perform this step for you.
-	  * no need to perform Step 5 - _install v_repStubsGen (https://github.com/fferri/v_repStubsGen.git)_ if you clone the [v_repExtRosInterface](https://github.com/CoppeliaRobotics/v_repExtRosInterface) repository recursively by doing,
-	    ```
-	    git clone --recursive https://github.com/CoppeliaRobotics/v_repExtRosInterface.git vrep_ros_interface
-	    ```
-3. Update the binaries in the mounted V-REP folder with the ones from the built `catkin` workspace
-4. Launch V-REP and monitor the terminal, you should see
-```
-./vrep.sh
-...
-Plugin 'RosInterface': loading...
-Plugin 'RosInterface': load succeeded.
-...
-```
-4. Upon successful RosInterface load, checking the available nodes gives this:
-```
-$ rosnode list
-/rosout
-/vrep_ros_interface
-```
-5. Test with the examples provided in the [online tutorial](http://www.coppeliarobotics.com/helpFiles/en/rosTutorialIndigo.htm)
-
-
+For more information about the build process and on how to use each individual simulation tool's Docker container, please read the associated READMEs
+* [V-REP](./ros-kinetic-vrep/README.md)
+* [Gazebo 7](./ros-kinetic-gazebo7/README.md)
+* [Gazebo 8](./ros-kinetic-gazebo8/README.md)
+* [Gazebo 9](./ros-kinetic-gazebo9/README.md)
