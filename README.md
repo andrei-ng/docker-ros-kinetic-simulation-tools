@@ -58,7 +58,7 @@ ros-kinetic-vrep: ros-kinetic-base-nvidia ## Build ROS-Kinetic Xenial Docker Ima
 
 Navigate to any of the subfolders and enter in a terminal [./run_docker.sh](./ros-kinetic-vrep/run_docker.sh) with the image name from the previous build step, e.g.,
 ```
-./run.sh codookie/xenial:ros-kinetic-vrep
+./run_docker.sh codookie/xenial:ros-kinetic-vrep
 ```
 
 
