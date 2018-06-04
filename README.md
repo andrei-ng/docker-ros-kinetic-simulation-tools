@@ -3,10 +3,10 @@
 This repository contains Dockerfile(s) for building Docker Images with [ROS Kinetic](http://wiki.ros.org/kinetic) (full version) with different Simulation Tools for Ubuntu Xenial targeted at NVIDIA platforms (with NVIDIA hardware acceleration, OpenGL support and shared X11 socket). 
 
 The images are used for testing ROS Kinetic with:
-* [V-REP](http://www.coppeliarobotics.com/index.html)
-* [Gazebo 7](http://gazebosim.org/blog/gazebo7)
-* [Gazebo 8](http://gazebosim.org/blog/gazebo8)
-* [Gazebo 9](http://gazebosim.org/blog/gazebo9)
+* [V-REP](http://www.coppeliarobotics.com/index.html) (DONE)
+* [Gazebo 7](http://gazebosim.org/blog/gazebo7) (TODO - already in base)
+* [Gazebo 8](http://gazebosim.org/blog/gazebo8) (TODO)
+* [Gazebo 9](http://gazebosim.org/blog/gazebo9) (TODO)
 ---
 
 ### Contents

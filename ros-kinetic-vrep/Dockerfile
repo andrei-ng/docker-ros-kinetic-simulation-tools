@@ -2,7 +2,7 @@ FROM codookie/xenial:ros-kinetic-base-nvidia
 
 MAINTAINER Andrei Gherghescu <gandrein@gmail.com>
 
-LABEL Description="Customized ROS-Kinetic-Full-Desktop for VREP Simualtor with NVIDIA support for Ubuntu 16.04" Version="1.0"
+LABEL Description="Customized ROS-Kinetic-Full-Desktop for VREP Simulator with NVIDIA support for Ubuntu 16.04" Version="1.0"
 
 # Arguments
 ARG user=docker
